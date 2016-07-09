@@ -15,10 +15,18 @@
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);
+var io = require('socket.io')(http);
 
 var options = {root: __dirname};
 app.get('/', function(req, res){
 	res.sendFile('index.html', options);
+});
+
+io.on('connection', function(socket){
+    console.log('client connected');
+    socket.on('update', function(msg) {
+        console.log('update: ' + JSON.stringify(msg));
+    });
 });
 
 http.listen(3000, function(){

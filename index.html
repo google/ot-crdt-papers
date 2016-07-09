@@ -22,7 +22,52 @@ limitations under the License.
     </style>
   </head>
   <body>
+  <script src="/socket.io/socket.io.js"></script>
   <h1>Operational Transformation testbed</h1>
-  <textarea cols="80" rows="24" autofocus></textarea>
+  <textarea id="text" cols="80" rows="24" autofocus></textarea>
   </body>
+  <script>
+    var pri = Math.floor(Math.random() * 0x1000000);
+    var ser = 0;
+    function getid() {
+        return (pri * 0x100000) + ser++;
+    }
+    function diffToOps(diff) {
+        var start = diff[0];
+        var end = diff[1];
+        var newstr = diff[2];
+        var result = [];
+        for (var i = start; i < end; i++) {
+            result.push({pri: pri, ty: 'del', ix: start, id: getid()});
+        }
+        for (var i = 0; i < newstr.length; i++) {
+            result.push({pri: pri, ty: 'ins', ix: start + i, id: getid(), ch: newstr.charAt(i)});
+        }
+        return result;
+    }
+    function getDiff(oldText, newText, cursor) {
+        var delta = newText.length - oldText.length;
+        var limit = Math.max(0, cursor - delta);
+        var end = oldText.length;
+        while (end > limit && oldText.charAt(end - 1) == newText.charAt(end + delta - 1)) {
+            end -= 1;
+        }
+        var start = 0;
+        var startLimit = cursor - Math.max(0, delta);
+        while (start < startLimit && oldText.charAt(start) == newText.charAt(start)) {
+            start += 1;
+        }
+        return [start, end, newText.slice(start, end + delta)];
+    }
+    var textElement = document.getElementById("text");
+    var oldText = "";
+    var socket = io();
+    textElement.addEventListener("input", function(event) {
+        var diff = getDiff(oldText, textElement.value, text.selectionEnd);
+        var ops = diffToOps(diff);
+        socket.emit('update', ops);
+        console.log('ops:' + JSON.stringify(ops));
+        oldText = textElement.value;
+    });
+  </script>
 </html>
