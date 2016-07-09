@@ -23,6 +23,7 @@ limitations under the License.
   </head>
   <body>
   <script src="/socket.io/socket.io.js"></script>
+  <script src="/ot_toy.js"></script>
   <h1>Operational Transformation testbed</h1>
   <textarea id="text" cols="80" rows="24" autofocus></textarea>
   </body>
@@ -32,16 +33,17 @@ limitations under the License.
     function getid() {
         return (pri * 0x100000) + ser++;
     }
-    function diffToOps(diff) {
+    function diffToOps(diff, docState) {
         var start = diff[0];
         var end = diff[1];
         var newstr = diff[2];
         var result = [];
         for (var i = start; i < end; i++) {
-            result.push({pri: pri, ty: 'del', ix: start, id: getid()});
+            result.push({pri: pri, ty: 'del', ix: docState.xform_ix(i), id: getid()});
         }
+        var ix = docState.xform_ix(end);
         for (var i = 0; i < newstr.length; i++) {
-            result.push({pri: pri, ty: 'ins', ix: start + i, id: getid(), ch: newstr.charAt(i)});
+            result.push({pri: pri, ty: 'ins', ix: ix + i, id: getid(), ch: newstr.charAt(i)});
         }
         return result;
     }
@@ -62,12 +64,28 @@ limitations under the License.
     var textElement = document.getElementById("text");
     var oldText = "";
     var socket = io();
+    var docState = new DocState();
+    var peer = new Peer();
     textElement.addEventListener("input", function(event) {
         var diff = getDiff(oldText, textElement.value, text.selectionEnd);
-        var ops = diffToOps(diff);
+        var ops = diffToOps(diff, docState);
+        // apply ops locally
+        for (var i = 0; i < ops.length; i++) {
+            docState.add(ops[i]);
+        }
         socket.emit('update', ops);
         console.log('ops:' + JSON.stringify(ops));
+        console.log('docstate: ' + docState.get_str());
         oldText = textElement.value;
+    });
+    socket.on('update', function(ops) {
+        console.log('from server:' + JSON.stringify(ops));
+        for (var i = 0; i < ops.length; i++) {
+            peer.merge_op(docState, ops[i]);
+        }
+        textElement.value = docState.get_str();
+        oldText = textElement.value;
+        // TODO: update cursor
     });
   </script>
 </html>

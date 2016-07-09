@@ -16,16 +16,34 @@ var express = require('express');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var ot_toy = require('./ot_toy');
 
 var options = {root: __dirname};
 app.get('/', function(req, res){
-	res.sendFile('index.html', options);
+    res.sendFile('index.html', options);
 });
 
+app.get('/ot_toy.js', function(req, res){
+    res.sendFile('ot_toy.js', options);
+});
+
+var docState = new ot_toy.DocState();
+
+var rev = 0;
+function broadcast() {
+    io.emit('update', docState.ops.slice(rev));
+    rev = docState.ops.length;
+}
+
 io.on('connection', function(socket){
+    var peer = new ot_toy.Peer();
     console.log('client connected');
-    socket.on('update', function(msg) {
-        console.log('update: ' + JSON.stringify(msg));
+    socket.on('update', function(ops) {
+        for (var i = 0; i < ops.length; i++) {
+            peer.merge_op(docState, ops[i]);
+        }
+        broadcast();
+        console.log('update: ' + JSON.stringify(ops) + ": " + docState.get_str());
     });
 });
 

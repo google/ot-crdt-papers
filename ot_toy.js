@@ -148,7 +148,7 @@ function tree_toy() {
 	console.log(to_array(xi_one(tree, 5)));
 }
 
-tree_toy();
+//tree_toy();
 
 // transformations of operations
 // All operations have 'ty' and 'ix' properties
@@ -198,6 +198,14 @@ class DocState {
 			this.str = this.str.slice(0, ix) + op.ch + this.str.slice(ix);
 		}
 	}
+
+    xform_ix(ix) {
+        return xi(this.dels, ix);
+    }
+
+    get_str() {
+        return this.str;
+    }
 }
 
 class Peer {
@@ -213,7 +221,7 @@ class Peer {
 			// we already have this, roll rev forward
 			this.rev++;
 			while (this.rev < ops.length && this.context.has(ops[this.rev].id)) {
-				this.context.delete(ops[this.rev]);
+				this.context.delete(ops[this.rev].id);
 				this.rev++;
 			}
 			return;
@@ -243,6 +251,18 @@ class Peer {
 		for (var i = ins_list.length - 1; i >= 0; i--) {
 			op = transform_ins(op, ins_list[i][0], ins_list[i][1]);
 		}
+        var current = (this.rev == ops.length);
 		doc_state.add(op);
+        if (current) {
+            this.rev++;
+        } else {
+            this.context.add(id);
+        }
 	}
+}
+
+// Export as a module for node, but don't bother namespacing for browser
+if (typeof exports !== 'undefined') {
+    exports.DocState = DocState;
+    exports.Peer = Peer;
 }
