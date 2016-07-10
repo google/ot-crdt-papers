@@ -17,6 +17,7 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var ot_toy = require('./ot_toy');
+var sleep = require('sleep');
 
 var options = {root: __dirname};
 app.get('/', function(req, res){
@@ -31,6 +32,7 @@ var docState = new ot_toy.DocState();
 
 var rev = 0;
 function broadcast() {
+    sleep.sleep(1);
     io.emit('update', docState.ops.slice(rev));
     rev = docState.ops.length;
 }
