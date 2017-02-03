@@ -32,9 +32,11 @@ var docState = new ot_toy.DocState();
 
 var rev = 0;
 function broadcast() {
-    sleep.sleep(1);
-    io.emit('update', docState.ops.slice(rev));
-    rev = docState.ops.length;
+    //sleep.sleep(1);
+    if (rev < docState.ops.length) {
+        io.emit('update', docState.ops.slice(rev));
+        rev = docState.ops.length;
+    }
 }
 
 io.on('connection', function(socket){

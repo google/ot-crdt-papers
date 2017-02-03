@@ -80,8 +80,12 @@ limitations under the License.
     });
     socket.on('update', function(ops) {
         console.log('from server:' + JSON.stringify(ops));
+        var rev = docState.ops.length;
         for (var i = 0; i < ops.length; i++) {
             peer.merge_op(docState, ops[i]);
+        }
+        if (rev < docState.ops.length) {
+            socket.emit('update', docState.ops.slice(rev));
         }
         textElement.value = docState.get_str();
         oldText = textElement.value;
