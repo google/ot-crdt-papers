@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// A collaborative text editing server, based on socket.io. You should be able
+// to run this as just "node .", followed by connecting clients to
+// http://localhost:3000/
+
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);
@@ -32,8 +36,8 @@ var docState = new ot_toy.DocState();
 
 var rev = 0;
 function broadcast() {
-    //sleep.sleep(1);
     if (rev < docState.ops.length) {
+        //sleep.sleep(1);  // disable for good performance, enable to simulate lag
         io.emit('update', docState.ops.slice(rev));
         rev = docState.ops.length;
     }
@@ -49,8 +53,9 @@ io.on('connection', function(socket){
         broadcast();
         console.log('update: ' + JSON.stringify(ops) + ": " + docState.get_str());
     });
+    socket.emit('update', docState.ops);
 });
 
 http.listen(3000, function(){
-  console.log('listening on *:3000');
+  console.log('Connect your client to http://localhost:3000/');
 });

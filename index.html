@@ -80,6 +80,7 @@ limitations under the License.
     });
     socket.on('update', function(ops) {
         console.log('from server:' + JSON.stringify(ops));
+        docState.points = [text.selectionStart, text.selectionEnd];
         var rev = docState.ops.length;
         for (var i = 0; i < ops.length; i++) {
             peer.merge_op(docState, ops[i]);
@@ -89,7 +90,8 @@ limitations under the License.
         }
         textElement.value = docState.get_str();
         oldText = textElement.value;
-        // TODO: update cursor
+        text.selectionStart = docState.points[0];
+        text.selectionEnd = docState.points[1];
     });
   </script>
 </html>
